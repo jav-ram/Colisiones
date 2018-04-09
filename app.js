@@ -7,6 +7,8 @@ let renderer;
 let isla;
 let grua = [];
 let barcoModelo;
+let water;
+
 let central = new THREE.Group();
 let palo = new THREE.Group();
 let paloInterno = new THREE.Group();
@@ -24,9 +26,9 @@ const T_SHEAR =  0.01;
 init();
 
 function init() {
-  camera[0] = new THREE.PerspectiveCamera(75, window.innerWidth/ window.innerHeight, 0.1, 1000);
-  camera[1] = new THREE.PerspectiveCamera(75, window.innerWidth/ window.innerHeight, 0.1, 1000);
-  camera[2] = new THREE.PerspectiveCamera(75, window.innerWidth/ window.innerHeight, 0.1, 1000);
+  camera[0] = new THREE.PerspectiveCamera(45, window.innerWidth/ window.innerHeight, 0.1, 20000000);
+  camera[1] = new THREE.PerspectiveCamera(45, window.innerWidth/ window.innerHeight, 0.1, 20000000);
+  camera[2] = new THREE.PerspectiveCamera(45, window.innerWidth/ window.innerHeight, 0.1, 20000000);
 
   controls[0] = new THREE.TrackballControls(camera[0]);
   controls[0].addEventListener('change', render);
@@ -34,25 +36,17 @@ function init() {
   controls[1].addEventListener('change', render);
   controls[2] = new THREE.TrackballControls(camera[2]);
   controls[2].addEventListener('change', render);
-  camera[0].up = new THREE.Vector3(0,1,0);
-  camera[1].up = new THREE.Vector3(0,1,0);
-  camera[2].up = new THREE.Vector3(0,1,0);
 
 
   scene = new THREE.Scene();
 
-  let lights = [];
-	lights[ 0 ] = new THREE.PointLight( 0xffffff, 1, 0 );
-	lights[ 1 ] = new THREE.PointLight( 0xffffff, 1, 0 );
-	lights[ 2 ] = new THREE.PointLight( 0xffffff, 1, 0 );
+  var ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 );
+	scene.add( ambientLight );
 
-	lights[ 0 ].position.set( 0, 200, 0 );
-	lights[ 1 ].position.set( 100, 200, 100 );
-	lights[ 2 ].position.set( - 100, - 200, - 100 );
+	var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.6 );
+	directionalLight.position.set( - 1, 1, 1 );
+	scene.add( directionalLight );
 
-	scene.add( lights[ 0 ] );
-	scene.add( lights[ 1 ] );
-	scene.add( lights[ 2 ] );
 
   //load assets
   let loader = new THREE.ColladaLoader();
@@ -127,6 +121,8 @@ function init() {
     barcoModelo.rotateZ(3.14/2);
     barcoModelo.scale.add(new THREE.Vector3(12, 12, 12))
 
+    //barcoModelo.material = new THREE.MeshPhongMaterial( { map: barcoModelo.material.map } );
+
     camera[2].position.x = barcoModelo.position.x;
     camera[2].position.y = barcoModelo.position.y + 12;
     camera[2].position.z = barcoModelo.position.z + 35;
@@ -143,9 +139,27 @@ function init() {
     scene.add(barco);
   });
 
+  //AGUA
+  let waterGeometry = new THREE.PlaneBufferGeometry(750,750);
+
+	water = new THREE.Water( waterGeometry, {
+		color: '#a2f9ff',
+		scale: 1,
+		flowDirection: new THREE.Vector2( 1, 1 ),
+		textureWidth: 1024,
+		textureHeight: 1024
+	} );
+
+	water.position.y = 25;
+	water.rotation.x = Math.PI * - 0.5;
+	scene.add( water );
+
   renderer = new THREE.WebGLRenderer();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+  renderer.setPixelRatio( window.devicePixelRatio );
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  document.body.appendChild( renderer.domElement );
+
+  initSky();
 
   camera[0].position.z = 100;
 
@@ -174,6 +188,65 @@ function onDocumentKeyDown(event) {
     barcoControl(keyCode);
   }
   console.log(keyCode);
+}
+
+
+function initSky() {
+
+  // Add Sky
+  sky = new THREE.Sky();
+  sky.scale.setScalar( 450000 );
+  scene.add( sky );
+
+  // Add Sun Helper
+  sunSphere = new THREE.Mesh(
+    new THREE.SphereBufferGeometry( 20000, 16, 8 ),
+    new THREE.MeshBasicMaterial( { color: 0xffffff } )
+  );
+  sunSphere.position.y = - 700000;
+  sunSphere.visible = false;
+  scene.add( sunSphere );
+
+  /// GUI
+
+  var effectController  = {
+    turbidity: 10,
+    rayleigh: 2,
+    mieCoefficient: 0.005,
+    mieDirectionalG: 0.8,
+    luminance: 1,
+    inclination: 0.1931, // elevation / inclination
+    azimuth: 0.25, // Facing front,
+    sun: ! true
+  };
+
+  var distance = 400000;
+
+  function guiChanged() {
+
+    var uniforms = sky.material.uniforms;
+    uniforms.turbidity.value = effectController.turbidity;
+    uniforms.rayleigh.value = effectController.rayleigh;
+    uniforms.luminance.value = effectController.luminance;
+    uniforms.mieCoefficient.value = effectController.mieCoefficient;
+    uniforms.mieDirectionalG.value = effectController.mieDirectionalG;
+
+    var theta = Math.PI * ( effectController.inclination - 0.5 );
+    var phi = 2 * Math.PI * ( effectController.azimuth - 0.5 );
+
+    sunSphere.position.x = distance * Math.cos( phi );
+    sunSphere.position.y = distance * Math.sin( phi ) * Math.sin( theta );
+    sunSphere.position.z = distance * Math.sin( phi ) * Math.cos( theta );
+
+    sunSphere.visible = effectController.sun;
+
+    uniforms.sunPosition.value.copy( sunSphere.position );
+
+    renderer.render( scene, camera );
+
+  }
+
+  guiChanged();
 }
 
 
