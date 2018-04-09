@@ -6,11 +6,13 @@ let renderer;
 //objetos
 let isla;
 let grua = [];
+let barcoModelo;
 let central = new THREE.Group();
 let palo = new THREE.Group();
 let paloInterno = new THREE.Group();
 let horizontal = new THREE.Group();
-let i = 1;
+let barco = new THREE.Group();
+let i = 2;
 
 //Macros
 const T_FACTOR = 1;
@@ -24,12 +26,17 @@ init();
 function init() {
   camera[0] = new THREE.PerspectiveCamera(75, window.innerWidth/ window.innerHeight, 0.1, 1000);
   camera[1] = new THREE.PerspectiveCamera(75, window.innerWidth/ window.innerHeight, 0.1, 1000);
+  camera[2] = new THREE.PerspectiveCamera(75, window.innerWidth/ window.innerHeight, 0.1, 1000);
 
   controls[0] = new THREE.TrackballControls(camera[0]);
   controls[0].addEventListener('change', render);
   controls[1] = new THREE.TrackballControls(camera[1]);
   controls[1].addEventListener('change', render);
+  controls[2] = new THREE.TrackballControls(camera[2]);
+  controls[2].addEventListener('change', render);
+  camera[0].up = new THREE.Vector3(0,1,0);
   camera[1].up = new THREE.Vector3(0,1,0);
+  camera[2].up = new THREE.Vector3(0,1,0);
 
 
   scene = new THREE.Scene();
@@ -111,6 +118,31 @@ function init() {
     paloInterno.add(horizontal);
   });
 
+  //BARCO
+  loader.load( './Objetos/barco2.dae', function (collada) {
+    let model = collada.scene;
+    barcoModelo = model;
+    barcoModelo.position.y = 0;
+    barcoModelo.position.x = 0;
+    barcoModelo.rotateZ(3.14/2);
+    barcoModelo.scale.add(new THREE.Vector3(12, 12, 12))
+
+    camera[2].position.x = barcoModelo.position.x;
+    camera[2].position.y = barcoModelo.position.y + 12;
+    camera[2].position.z = barcoModelo.position.z + 35;
+
+    controls[2].target = new THREE.Vector3(barcoModelo.position.x, barcoModelo.position.y + 2, barcoModelo.position.z);
+
+
+    barco.add(barcoModelo);
+    barco.add(camera[2]);
+
+    barco.translateX(-38);
+    barco.translateY(28);
+
+    scene.add(barco);
+  });
+
   renderer = new THREE.WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
@@ -138,6 +170,8 @@ function onDocumentKeyDown(event) {
     freeControl(keyCode);
   } else if (i == 1){
     gruaControl(keyCode)
+  } else if (i == 2){
+    barcoControl(keyCode);
   }
   console.log(keyCode);
 }

@@ -13,19 +13,19 @@ function gruaControl(keyCode) {
     central.translateX(-T_FACTOR);
   } else if (keyCode == 68){
     //Derecha
-    central.translateZ(+T_FACTOR);
+    central.rotateY(-T_ROTATE);
   } else if (keyCode == 65){
     //izquierda
-    central.translateZ(-T_FACTOR);
+    central.rotateY(+T_ROTATE);
   }
 
   //ROTAR
    else if (keyCode == 81){
      //derecha
-     central.rotateY( T_ROTATE);
+     palo.rotateY( T_ROTATE);
    } else if (keyCode == 69){
      //derecha
-     central.rotateY(-T_ROTATE);
+     palo.rotateY(-T_ROTATE);
    }
 
    //
