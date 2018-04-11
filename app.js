@@ -143,11 +143,14 @@ function init() {
   let waterGeometry = new THREE.PlaneBufferGeometry(750,750);
 
 	water = new THREE.Water( waterGeometry, {
+    waterNormals: new THREE.TextureLoader().load('waternormals.jpg', function(texture) {
+      texture.wrapS = texture.wrapT = THREE.RepeatWraping;
+    }),
+    alpha: 0.5,
 		color: '#a2f9ff',
 		scale: 1,
-		flowDirection: new THREE.Vector2( 1, 1 ),
-		textureWidth: 1024,
-		textureHeight: 1024
+		textureWidth: 512,
+		textureHeight: 512
 	} );
 
 	water.position.y = 25;
@@ -215,7 +218,7 @@ function initSky() {
     mieCoefficient: 0.005,
     mieDirectionalG: 0.8,
     luminance: 1,
-    inclination: 0.1931, // elevation / inclination
+    inclination: 0.49, // elevation / inclination
     azimuth: 0.25, // Facing front,
     sun: ! true
   };
@@ -242,7 +245,7 @@ function initSky() {
 
     uniforms.sunPosition.value.copy( sunSphere.position );
 
-    renderer.render( scene, camera );
+    //renderer.render( scene, camera );
 
   }
 
@@ -261,7 +264,7 @@ var animate = function(){
   requestAnimationFrame(animate);
   //debug
   controls[i].update();
-
+  water.material.uniforms.time.value += 1.0/60;
   render();
 
 }
