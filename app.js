@@ -14,13 +14,17 @@ let palo = new THREE.Group();
 let paloInterno = new THREE.Group();
 let horizontal = new THREE.Group();
 let barco = new THREE.Group();
-let i = 2;
+let i = 1;
 
 //Macros
 const T_FACTOR = 1;
 const T_ROTATE = 0.1;
 const T_SCALE =  0.01;
 const T_SHEAR =  0.01;
+
+//Inicializar fisicas
+Physijs.scripts.worker = 'physijs_worker.js';
+Physijs.scripts.ammo = 'ammo.js';
 
 //comenzar
 init();
@@ -38,7 +42,13 @@ function init() {
   controls[2].addEventListener('change', render);
 
 
-  scene = new THREE.Scene();
+  scene = new Physijs.Scene;
+  scene.setGravity(new THREE.Vector3(0, -0.001, 0))
+
+  renderer = new THREE.WebGLRenderer();
+  renderer.setPixelRatio( window.devicePixelRatio );
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  document.body.appendChild( renderer.domElement );
 
   var ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 );
 	scene.add( ambientLight );
@@ -61,7 +71,12 @@ function init() {
   loader.load( './Objetos/carro.dae', function (collada) {
     let model = collada.scene;
     grua[0] = model;
-    grua[0].position.y = 31.5;
+    grua[0].position.y = 0;
+    central = new Physijs.BoxMesh(
+  			new THREE.CubeGeometry( 0.5, 0.5, 0.5 ),
+  			new THREE.MeshBasicMaterial({ color: 0x888888 })
+  	);
+    central.position.y = 31.5;
 
     //grua[0].rotation.z += 2.355;
 
@@ -72,6 +87,9 @@ function init() {
     var x = camera[1].position.x;
     var y = camera[1].position.y;
     var z = camera[1].position.z;
+
+    //collider.add(grua[0]);
+
     /*
     let t = 3.14/1.5
 
@@ -80,7 +98,7 @@ function init() {
     */
 
     controls[1].target = new THREE.Vector3(grua[0].position.x, grua[0].position.y + 2, grua[0].position.z);
-    central.add(grua[0]);
+    central.add(grua[0])
     central.add(camera[1]);
     scene.add(central);
   });
@@ -88,7 +106,7 @@ function init() {
   loader.load( './Objetos/palo.dae', function (collada) {
     let model = collada.scene;
     grua[1] = model;
-    grua[1].position.y = 31.5
+    grua[1].position.y = 0;
 
     palo.add(grua[1])
     central.add(palo);
@@ -97,7 +115,7 @@ function init() {
   loader.load( './Objetos/paloInterno.dae', function (collada) {
     let model = collada.scene;
     grua[2] = model;
-    grua[2].position.y = 31.5
+    grua[2].position.y = 0
 
     paloInterno.add(grua[2])
     palo.add(paloInterno);
@@ -106,7 +124,7 @@ function init() {
   loader.load( './Objetos/horizontal.dae', function (collada) {
     let model = collada.scene;
     grua[3] = model;
-    grua[3].position.y = 31.5
+    grua[3].position.y = 0
 
     horizontal.add(grua[3])
     paloInterno.add(horizontal);
@@ -157,10 +175,7 @@ function init() {
 	water.rotation.x = Math.PI * - 0.5;
 	scene.add( water );
 
-  renderer = new THREE.WebGLRenderer();
-  renderer.setPixelRatio( window.devicePixelRatio );
-  renderer.setSize( window.innerWidth, window.innerHeight );
-  document.body.appendChild( renderer.domElement );
+
 
   initSky();
 
@@ -259,14 +274,21 @@ function render() {
 }
 
 
+function setTransforms() {
+  central.__dirtyPosition = true;
+  central.__dirtyRotation = true;
+  central.setLinearVelocity(new THREE.Vector3(0, 0, 0));
+  central.setAngularVelocity(new THREE.Vector3(0, 0, 0));
+}
 
 var animate = function(){
   requestAnimationFrame(animate);
   //debug
   controls[i].update();
+  scene.simulate();
   water.material.uniforms.time.value += 1.0/60;
   render();
-
+  setTransforms();
 }
 
 animate();

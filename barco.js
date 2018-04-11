@@ -14,8 +14,8 @@ function barcoControl(keyCode) {
     //izquierda
     barco.rotateY(+T_ROTATE);
   } else if (keyCode == 81){
-    barco.translateX(-T_FACTOR);
+    barco.translate(-T_FACTOR);
   } else if (keyCode == 69){
-    barco.translateX(+T_FACTOR);
+    barco.translate(+T_FACTOR);
   }
 }
