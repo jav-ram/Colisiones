@@ -65,4 +65,11 @@ function gruaControl(keyCode) {
       horizontal.position.x = 0;
     }
    }
+
+   //Mano
+   else if (keyCode == 89){
+     grua[4].translateY(+T_FACTOR/4);
+   } else if (keyCode == 72){
+     grua[4].translateY(-T_FACTOR/4);
+   }
 }

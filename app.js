@@ -5,16 +5,19 @@ let controls=[];
 let renderer;
 //objetos
 let isla;
+let islaCollider;
 let grua = [];
+let contenedor = [];
 let barcoModelo;
 let water;
+let box;
 
 let central = new THREE.Group();
 let palo = new THREE.Group();
 let paloInterno = new THREE.Group();
 let horizontal = new THREE.Group();
 let barco = new THREE.Group();
-let i = 1;
+let i = 2;
 
 //Macros
 const T_FACTOR = 1;
@@ -43,7 +46,7 @@ function init() {
 
 
   scene = new Physijs.Scene;
-  scene.setGravity(new THREE.Vector3(0, -0.001, 0))
+  scene.setGravity(new THREE.Vector3(0, -9, 0))
 
   renderer = new THREE.WebGLRenderer();
   renderer.setPixelRatio( window.devicePixelRatio );
@@ -58,13 +61,32 @@ function init() {
 	scene.add( directionalLight );
 
 
+  for (let j = 0; j < 1; j++){
+    contenedor[j] = new Physijs.BoxMesh(
+      new THREE.CubeGeometry(2,2,4),
+      new THREE.MeshPhongMaterial({color:0xfff}), 10
+    )
+    contenedor[j].position.y = 40;
+    contenedor[j].position.x = 15*j + 15;
+    scene.add(contenedor[j]);
+  }
+
+
   //load assets
   let loader = new THREE.ColladaLoader();
   //isla
   loader.load( './Objetos/Isla/isla.dae', function (collada) {
     let model = collada.scene;
+    //isla = new Physijs.ConvexMesh(model.children[0].geometry, model.children[0].material);
     isla = model;
     isla.scale.add(new THREE.Vector3(10, 10, 10));
+    islaCollider = new Physijs.BoxMesh(
+      new THREE.CubeGeometry(90, 30, 110),
+      new THREE.MeshBasicMaterial({ color: 0x000, visible: false }), 0
+    );
+    islaCollider.position.y = 15.4;
+    islaCollider.position.x = 12;
+    scene.add(islaCollider)
     scene.add(isla)
   });
   //Grua Carro
@@ -73,8 +95,8 @@ function init() {
     grua[0] = model;
     grua[0].position.y = 0;
     central = new Physijs.BoxMesh(
-  			new THREE.CubeGeometry( 0.5, 0.5, 0.5 ),
-  			new THREE.MeshBasicMaterial({ color: 0x888888 })
+  			new THREE.CubeGeometry( 5.2, 0.55, 5 ),
+  			new THREE.MeshBasicMaterial({ color: 0x888888, visible: false })
   	);
     central.position.y = 31.5;
 
@@ -102,6 +124,14 @@ function init() {
     central.add(camera[1]);
     scene.add(central);
   });
+  //plano
+  suelo = new Physijs.BoxMesh(
+    new THREE.CubeGeometry(1000, 0.5, 1000),
+    new THREE.MeshBasicMaterial({ color: 0xfff, visible: false }),
+    0
+  );
+  suelo.position.y = 22
+  scene.add(suelo);
 
   loader.load( './Objetos/palo.dae', function (collada) {
     let model = collada.scene;
@@ -126,15 +156,39 @@ function init() {
     grua[3] = model;
     grua[3].position.y = 0
 
-    horizontal.add(grua[3])
+    grua[4] = new Physijs.BoxMesh(
+        new THREE.CubeGeometry( 1.5, 1.5, 1.5 ),
+        new THREE.MeshBasicMaterial({ color: 0xfff }), 10
+    );
+    grua[4].addEventListener( 'collision', function( other_object, relative_velocity, relative_rotation, contact_normal ) {
+      // `this` has collided with `other_object` with an impact speed of `relative_velocity` and a rotational force of `relative_rotation` and at normal `contact_normal`
+      console.log("asdasdasdasdas");
+      for (let j = 0; j < contenedor.length; j++){
+        if (other_object == contenedor[j]){
+          console.log("Colision");
+          central.add(other_object);
+        }
+      }
+    });
+
+    grua[4].position.y += 5;
+    grua[4].position.x += 5;
+
+    horizontal.add(grua[3]);
+    horizontal.add(grua[4])
     paloInterno.add(horizontal);
   });
+
+
+
+
 
   //BARCO
   loader.load( './Objetos/barco2.dae', function (collada) {
     let model = collada.scene;
+
     barcoModelo = model;
-    barcoModelo.position.y = 0;
+    barcoModelo.position.y = 3;
     barcoModelo.position.x = 0;
     barcoModelo.rotateZ(3.14/2);
     barcoModelo.scale.add(new THREE.Vector3(12, 12, 12))
@@ -147,6 +201,14 @@ function init() {
 
     controls[2].target = new THREE.Vector3(barcoModelo.position.x, barcoModelo.position.y + 2, barcoModelo.position.z);
 
+
+    barco = new Physijs.ConvexMesh(
+      new THREE.CubeGeometry(8, 3, 48),
+      new THREE.MeshBasicMaterial({ color: 0x888888, visible: false }),
+      100000
+    );
+
+    barco.position.y = -3
 
     barco.add(barcoModelo);
     barco.add(camera[2]);
@@ -174,7 +236,6 @@ function init() {
 	water.position.y = 25;
 	water.rotation.x = Math.PI * - 0.5;
 	scene.add( water );
-
 
 
   initSky();
@@ -275,20 +336,34 @@ function render() {
 
 
 function setTransforms() {
+
   central.__dirtyPosition = true;
   central.__dirtyRotation = true;
   central.setLinearVelocity(new THREE.Vector3(0, 0, 0));
   central.setAngularVelocity(new THREE.Vector3(0, 0, 0));
+
+  grua[4].__dirtyPosition = true;
+  grua[4].__dirtyRotation = true;
+  grua[4].setLinearVelocity(new THREE.Vector3(0, 0, 0));
+  grua[4].setAngularVelocity(new THREE.Vector3(0, 0, 0));
+
+
+  barco.setLinearVelocity(new THREE.Vector3(0, 0, 0));
+  barco.setAngularVelocity(new THREE.Vector3(0, 0, 0));
+  //barco.rotation.y = 0;
+
 }
 
 var animate = function(){
   requestAnimationFrame(animate);
   //debug
   controls[i].update();
-  scene.simulate();
   water.material.uniforms.time.value += 1.0/60;
-  render();
+
   setTransforms();
+  scene.simulate();
+  render();
+
 }
 
 animate();
