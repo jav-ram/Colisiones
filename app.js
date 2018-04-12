@@ -61,13 +61,33 @@ function init() {
 	scene.add( directionalLight );
 
 
-  for (let j = 0; j < 1; j++){
+  for (let j = 0; j < 3; j++){
+    let material = Physijs.createMaterial(
+    new THREE.MeshPhongMaterial({ color: 0xff }),
+      1,
+      0.1
+    );
     contenedor[j] = new Physijs.BoxMesh(
       new THREE.CubeGeometry(2,2,4),
-      new THREE.MeshPhongMaterial({color:0xfff}), 10
+      material, 10
+    )
+    contenedor[j].position.y = 35;
+    contenedor[j].position.z = 5*j + 5;
+    scene.add(contenedor[j]);
+  }
+
+  for (let j = 3; j < 6; j++){
+    let material = Physijs.createMaterial(
+    new THREE.MeshPhongMaterial({ color: 0xff }),
+      1,
+      0.1
+    );
+    contenedor[j] = new Physijs.BoxMesh(
+      new THREE.CubeGeometry(2,2,4),
+      material, 10
     )
     contenedor[j].position.y = 40;
-    contenedor[j].position.x = 15*j + 15;
+    contenedor[j].position.z = 5.5*(j-3) + 5.5  ;
     scene.add(contenedor[j]);
   }
 
@@ -94,6 +114,7 @@ function init() {
     let model = collada.scene;
     grua[0] = model;
     grua[0].position.y = 0;
+
     central = new Physijs.BoxMesh(
   			new THREE.CubeGeometry( 5.2, 0.55, 5 ),
   			new THREE.MeshBasicMaterial({ color: 0x888888, visible: false })
@@ -239,8 +260,9 @@ function init() {
 
 
   initSky();
-
-  camera[0].position.z = 100;
+  initNieve();
+  camera[0].position.z = 200;
+  camera[0].position.y = 50;
 
 }
 
@@ -334,6 +356,63 @@ function render() {
   renderer.render(scene, camera[i]);
 }
 
+function initNieve(){
+  // create the particle variables
+  var pMaterial = new THREE.ParticleBasicMaterial({
+    color: 0xFFFFFF,
+    size: 20,
+    map: THREE.ImageUtils.loadTexture(
+      "images/particle.png"
+    ),
+    blending: THREE.AdditiveBlending,
+    transparent: true
+  });
+  var particleCount = 1800,
+      particles = new THREE.Geometry(),
+      pMaterial
+
+  // now create the individual particles
+  for (var p = 0; p < particleCount; p++) {
+
+    // create a particle with random
+    // position values, -250 -> 250
+    var pX = Math.random() * 500 - 250,
+        pY = Math.random() * 500 - 250,
+        pZ = Math.random() * 500 - 250,
+        particle = new THREE.Vertex(
+          new THREE.Vector3(pX, pY, pZ)
+        );
+
+        
+
+    // add it to the geometry
+    particles.vertices.push(particle);
+  }
+
+  // create the particle system
+  particleSystem = new THREE.ParticleSystem(
+      particles,
+      pMaterial);
+  particleSystem.sortParticles = true;
+  // add it to the scene
+  scene.add(particleSystem);
+
+  // create the particle variables
+  var pMaterial = new THREE.ParticleBasicMaterial({
+    color: 0xFFFFFF,
+    size: 20,
+    map: THREE.ImageUtils.loadTexture(
+      "images/rain.png"
+    ),
+    blending: THREE.AdditiveBlending,
+    transparent: true
+  });
+
+  // also update the particle system to
+  // sort the particles which enables
+  // the behaviour we want
+  particleSystem.sortParticles = true;
+}
 
 function setTransforms() {
 
@@ -357,6 +436,7 @@ function setTransforms() {
 var animate = function(){
   requestAnimationFrame(animate);
   //debug
+  particleSystem.rotation.y += 0.01;
   controls[i].update();
   water.material.uniforms.time.value += 1.0/60;
 

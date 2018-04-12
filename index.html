@@ -7,10 +7,34 @@
 			body { margin: 0; }
 			canvas { width: 100%; height: 100% }
 		</style>
+    <!-- jQuery code to display an information button and box when clicked. -->
+    <script src="js/jquery-1.9.1.js"></script>
+    <script src="js/jquery-ui.js"></script>
+    <link rel=stylesheet href="css/jquery-ui.css" />
+    <link rel=stylesheet href="css/info.css"/>
+    <script src="js/info.js"></script>
+    <div id="infoButton"></div>
+    <div id="infoBox" title="Instrucciones">
+    Barco: <br/>
+    <ul>
+      <li>W/S: Adelante/Atras
+      <li>A/D: Rotar
+    </ul>
+    Grua: <br/>
+    <ul>
+      <li>W/S: Adelante/Atras
+      <li>A/D: Rotar carro
+      <li>Q/E: Rotar brazo central
+      <li>R/F: Extender/Encoger brazo horizontal
+      <li>T/G: Extender/Encoger brazo vertical
+      <li>Y/H: Bajar/Subir garra
+    </ul>
+</div>
   </head>
   <body>
     <script src="three.js"></script>
     <script src="physi.js"></script>
+    <script src="ParticleEngine.js"></script>
     <script src="TrackballControls.js"></script>
     <script src="ColladaLoader.js"></script>
     <script src="Water.js"></script>
